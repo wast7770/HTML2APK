@@ -1,0 +1,46 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extrair projeto do ZIP
+        run: |
+          ZIPFILE=$(ls *.zip | head -n 1)
+          unzip -o "$ZIPFILE" -d .
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configurar JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar Cordova
+        run: npm install -g cordova
+
+      - name: Adicionar plataforma Android
+        run: cordova platform add android
+
+      - name: Compilar APK (debug)
+        run: cordova build android
+
+      - name: Publicar APK gerado
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-apk
+          path: platforms/android/app/build/outputs/apk/debug/*.apk
